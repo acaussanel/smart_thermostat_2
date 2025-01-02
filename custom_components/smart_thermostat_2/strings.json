@@ -1,0 +1,23 @@
+{
+  "config": {
+    "step": {
+      "user": {
+        "title": "Smart Thermostat 2.0",
+        "description": "Set up your smart thermostat",
+        "data": {
+          "name": "Name",
+          "sensor": "Temperature Sensor",
+          "external_temp_sensor": "External Temperature Sensor",
+          "weather_entity": "Weather Entity",
+          "switch_entity": "Switch Entity",
+          "target_temperature": "Target Temperature",
+          "mode": "Heating Mode",
+          "learning_enabled": "Enable Machine Learning",
+          "forecast_hours": "Forecast Hours",
+          "min_power": "Minimum Power",
+          "max_power": "Maximum Power"
+        }
+      }
+    }
+  }
+}
