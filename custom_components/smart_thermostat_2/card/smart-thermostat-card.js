@@ -1,3 +1,4 @@
+```javascript
 const LitElement = Object.getPrototypeOf(customElements.get("ha-panel-lovelace"));
 const html = LitElement.prototype.html;
 const css = LitElement.prototype.css;
@@ -8,6 +9,24 @@ class SmartThermostatCard extends LitElement {
       hass: {},
       config: {},
       _scheduleMode: { type: Boolean },
+      _nightMode: { type: Object },
+      _arrivalMode: { type: Object },
+    };
+  }
+
+  constructor() {
+    super();
+    this._scheduleMode = false;
+    this._nightMode = {
+      enabled: false,
+      startTime: "22:00",
+      endTime: "06:00",
+      temperature: 17.0
+    };
+    this._arrivalMode = {
+      enabled: false,
+      arrivalTime: "17:30",
+      temperature: 20.0
     };
   }
 
@@ -15,69 +34,99 @@ class SmartThermostatCard extends LitElement {
     return css`
       :host {
         background: var(--ha-card-background, var(--card-background-color, white));
-        border-radius: var(--ha-card-border-radius, 4px);
+        border-radius: var(--ha-card-border-radius, 12px);
         box-shadow: var(--ha-card-box-shadow, 0 2px 2px 0 rgba(0, 0, 0, 0.14));
         color: var(--primary-text-color);
         display: block;
-        transition: all 0.3s ease-out;
         padding: 16px;
+        transition: all 0.3s ease-out;
       }
 
       .temperature {
         font-size: 48px;
         text-align: center;
-        margin: 16px 0;
+        margin: 24px 0;
+        font-weight: 300;
       }
 
       .modes {
-        display: flex;
-        justify-content: space-around;
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 8px;
         margin: 16px 0;
       }
 
       .mode-btn {
         background: var(--primary-color);
         border: none;
-        border-radius: 4px;
+        border-radius: 8px;
         color: var(--text-primary-color);
         cursor: pointer;
         padding: 8px 16px;
-        transition: background 0.3s ease;
+        transition: all 0.3s ease;
+        text-transform: capitalize;
       }
 
       .mode-btn.active {
         background: var(--accent-color);
+        font-weight: 500;
       }
 
-      .schedule {
-        margin-top: 16px;
-      }
-
-      .schedule-header {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        margin-bottom: 8px;
-      }
-
-      .schedule-content {
-        background: var(--primary-background-color);
-        border-radius: 4px;
+      .mode-section {
+        background: var(--ha-card-background);
+        border-radius: 8px;
         padding: 16px;
+        margin-top: 16px;
+        border: 1px solid var(--divider-color);
       }
 
-      .schedule-row {
+      .mode-header {
         display: flex;
         justify-content: space-between;
         align-items: center;
-        margin: 8px 0;
+        margin-bottom: 16px;
+      }
+
+      .mode-header h3 {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        margin: 0;
+        font-size: 16px;
+        color: var(--primary-text-color);
+      }
+
+      .mode-content {
+        display: flex;
+        flex-direction: column;
+        gap: 16px;
+      }
+
+      .time-inputs {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 12px;
+      }
+
+      .temperature-slider {
+        --mdc-theme-primary: var(--primary-color);
+        width: 100%;
+      }
+
+      .temp-display {
+        text-align: right;
+        color: var(--secondary-text-color);
+        font-size: 14px;
+      }
+
+      ha-icon {
+        color: var(--primary-color);
+      }
+
+      ha-switch {
+        --mdc-theme-secondary: var(--primary-color);
       }
     `;
-  }
-
-  constructor() {
-    super();
-    this._scheduleMode = false;
   }
 
   render() {
@@ -104,78 +153,105 @@ class SmartThermostatCard extends LitElement {
         </div>
 
         <div class="modes">
-          ${this._renderModeButtons(stateObj)}
+          ${['fast', 'constant', 'intermittent'].map(mode => html`
+            <button
+              class="mode-btn ${stateObj.attributes.mode === mode ? 'active' : ''}"
+              @click=${() => this._handleModeChange(mode)}
+            >
+              ${mode}
+            </button>
+          `)}
         </div>
 
-        <div class="controls">
-          <ha-slider
-            .min=${stateObj.attributes.min_temp}
-            .max=${stateObj.attributes.max_temp}
-            .value=${stateObj.attributes.temperature}
-            .step=${0.5}
-            @change=${this._handleTemperatureChange}
-          ></ha-slider>
-        </div>
-
-        <div class="schedule">
-          <div class="schedule-header">
-            <span>Schedule</span>
+        <!-- Night Mode -->
+        <div class="mode-section">
+          <div class="mode-header">
+            <h3>
+              <ha-icon icon="mdi:weather-night"></ha-icon>
+              Night Mode
+            </h3>
             <ha-switch
-              .checked=${this._scheduleMode}
-              @change=${this._toggleScheduleMode}
+              .checked=${this._nightMode.enabled}
+              @change=${(e) => this._updateNightMode({ enabled: e.target.checked })}
             ></ha-switch>
           </div>
+          
+          ${this._nightMode.enabled ? html`
+            <div class="mode-content">
+              <div class="time-inputs">
+                <div>
+                  <ha-textfield
+                    label="Start Time"
+                    type="time"
+                    .value=${this._nightMode.startTime}
+                    @change=${(e) => this._updateNightMode({ startTime: e.target.value })}
+                  ></ha-textfield>
+                </div>
+                <div>
+                  <ha-textfield
+                    label="End Time"
+                    type="time"
+                    .value=${this._nightMode.endTime}
+                    @change=${(e) => this._updateNightMode({ endTime: e.target.value })}
+                  ></ha-textfield>
+                </div>
+              </div>
+              <div>
+                <div class="temp-display">Night Temperature: ${this._nightMode.temperature}°C</div>
+                <ha-slider
+                  class="temperature-slider"
+                  min="10"
+                  max="30"
+                  step="0.5"
+                  pin
+                  .value=${this._nightMode.temperature}
+                  @change=${(e) => this._updateNightMode({ temperature: Number(e.target.value) })}
+                ></ha-slider>
+              </div>
+            </div>
+          ` : ''}
+        </div>
 
-          ${this._scheduleMode ? this._renderSchedule() : ''}
+        <!-- Arrival Mode -->
+        <div class="mode-section">
+          <div class="mode-header">
+            <h3>
+              <ha-icon icon="mdi:clock-outline"></ha-icon>
+              Arrival Mode
+            </h3>
+            <ha-switch
+              .checked=${this._arrivalMode.enabled}
+              @change=${(e) => this._updateArrivalMode({ enabled: e.target.checked })}
+            ></ha-switch>
+          </div>
+          
+          ${this._arrivalMode.enabled ? html`
+            <div class="mode-content">
+              <div>
+                <ha-textfield
+                  label="Arrival Time"
+                  type="time"
+                  .value=${this._arrivalMode.arrivalTime}
+                  @change=${(e) => this._updateArrivalMode({ arrivalTime: e.target.value })}
+                ></ha-textfield>
+              </div>
+              <div>
+                <div class="temp-display">Target Temperature: ${this._arrivalMode.temperature}°C</div>
+                <ha-slider
+                  class="temperature-slider"
+                  min="10"
+                  max="30"
+                  step="0.5"
+                  pin
+                  .value=${this._arrivalMode.temperature}
+                  @change=${(e) => this._updateArrivalMode({ temperature: Number(e.target.value) })}
+                ></ha-slider>
+              </div>
+            </div>
+          ` : ''}
         </div>
       </ha-card>
     `;
-  }
-
-  _renderModeButtons(stateObj) {
-    const modes = ['fast', 'constant', 'intermittent'];
-    return modes.map(
-      mode => html`
-        <button
-          class="mode-btn ${stateObj.attributes.mode === mode ? 'active' : ''}"
-          @click=${() => this._handleModeChange(mode)}
-        >
-          ${mode}
-        </button>
-      `
-    );
-  }
-
-  _renderSchedule() {
-    return html`
-      <div class="schedule-content">
-        ${(stateObj.attributes.schedule || []).map(
-          item => html`
-            <div class="schedule-row">
-              <span>${item.time}</span>
-              <span>${item.temp}°C</span>
-              <span>${item.mode}</span>
-              <ha-icon-button
-                icon="hass:pencil"
-                @click=${() => this._editScheduleItem(item)}
-              ></ha-icon-button>
-            </div>
-          `
-        )}
-        <ha-icon-button
-          icon="hass:plus"
-          @click=${this._addScheduleItem}
-        ></ha-icon-button>
-      </div>
-    `;
-  }
-
-  _handleTemperatureChange(e) {
-    const temperature = e.target.value;
-    this.hass.callService("climate", "set_temperature", {
-      entity_id: this.config.entity,
-      temperature: temperature
-    });
   }
 
   _handleModeChange(mode) {
@@ -185,16 +261,20 @@ class SmartThermostatCard extends LitElement {
     });
   }
 
-  _toggleScheduleMode(e) {
-    this._scheduleMode = e.target.checked;
+  _updateNightMode(changes) {
+    this._nightMode = { ...this._nightMode, ...changes };
+    this.hass.callService("smart_thermostat_2", "set_night_mode", {
+      entity_id: this.config.entity,
+      ...this._nightMode
+    });
   }
 
-  _editScheduleItem(item) {
-    // Implement schedule item editing
-  }
-
-  _addScheduleItem() {
-    // Implement new schedule item addition
+  _updateArrivalMode(changes) {
+    this._arrivalMode = { ...this._arrivalMode, ...changes };
+    this.hass.callService("smart_thermostat_2", "set_arrival_mode", {
+      entity_id: this.config.entity,
+      ...this._arrivalMode
+    });
   }
 
   setConfig(config) {
@@ -205,8 +285,9 @@ class SmartThermostatCard extends LitElement {
   }
 
   getCardSize() {
-    return 3;
+    return 4;
   }
 }
 
 customElements.define("smart-thermostat-card", SmartThermostatCard);
+```

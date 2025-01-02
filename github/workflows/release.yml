@@ -1,0 +1,26 @@
+```yaml
+name: Release
+
+on:
+  release:
+    types: [published]
+
+jobs:
+  release:
+    name: Prepare release
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - name: ZIP Component Dir
+        run: |
+          cd custom_components/smart_thermostat_2
+          zip -r ../../smart_thermostat_2.zip .
+      - name: Upload zip to release
+        uses: svenstaro/upload-release-action@v2
+        with:
+          repo_token: ${{ secrets.GITHUB_TOKEN }}
+          file: smart_thermostat_2.zip
+          asset_name: smart_thermostat_2.zip
+          tag: ${{ github.ref }}
+          overwrite: true
+```

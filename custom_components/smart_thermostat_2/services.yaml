@@ -1,0 +1,88 @@
+```yaml
+set_mode:
+  name: Set Mode
+  description: Set the heating mode of the thermostat
+  target:
+    entity:
+      domain: climate
+  fields:
+    mode:
+      name: Mode
+      description: The heating mode to set
+      required: true
+      selector:
+        select:
+          options:
+            - "fast"
+            - "constant"
+            - "intermittent"
+            - "auto"
+            - "night"
+            - "arrival"
+
+set_night_mode:
+  name: Set Night Mode
+  description: Configure night mode settings
+  target:
+    entity:
+      domain: climate
+  fields:
+    enabled:
+      name: Enabled
+      description: Enable or disable night mode
+      required: true
+      selector:
+        boolean:
+    start_time:
+      name: Start Time
+      description: Start time for night mode
+      required: true
+      selector:
+        time:
+    end_time:
+      name: End Time
+      description: End time for night mode
+      required: true
+      selector:
+        time:
+    temperature:
+      name: Temperature
+      description: Target temperature for night mode
+      required: true
+      selector:
+        number:
+          min: 10
+          max: 30
+          step: 0.5
+          unit_of_measurement: "°C"
+
+set_arrival_mode:
+  name: Set Arrival Mode
+  description: Configure arrival mode settings
+  target:
+    entity:
+      domain: climate
+  fields:
+    enabled:
+      name: Enabled
+      description: Enable or disable arrival mode
+      required: true
+      selector:
+        boolean:
+    arrival_time:
+      name: Arrival Time
+      description: Expected arrival time
+      required: true
+      selector:
+        time:
+    temperature:
+      name: Temperature
+      description: Target temperature for arrival
+      required: true
+      selector:
+        number:
+          min: 10
+          max: 30
+          step: 0.5
+          unit_of_measurement: "°C"
+```
