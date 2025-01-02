@@ -1,7 +1,7 @@
-"""Constants for Smart Thermostat 2.0."""
+"""Constants for Figgy Thermostat."""
 from typing import Final
 
-DOMAIN: Final = "smart_thermostat_2"
+DOMAIN: Final = "figgy_thermostat"
 
 # Configuration
 CONF_SENSOR: Final = "sensor"

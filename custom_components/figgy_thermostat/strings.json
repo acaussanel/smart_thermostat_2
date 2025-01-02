@@ -2,8 +2,8 @@
   "config": {
     "step": {
       "user": {
-        "title": "Smart Thermostat 2.0",
-        "description": "Set up your smart thermostat",
+        "title": "Figgy Thermostat",
+        "description": "Set up your Figgy thermostat",
         "data": {
           "name": "Name",
           "sensor": "Temperature Sensor",

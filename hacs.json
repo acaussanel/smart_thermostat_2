@@ -1,5 +1,5 @@
 {
-  "name": "Smart Thermostat 2.0",
+  "name": "Figgy Thermostat",
   "render_readme": true,
   "domains": ["climate"],
   "homeassistant": "2023.8.0",
